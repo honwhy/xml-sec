@@ -1,6 +1,5 @@
 package com.honey.xmlsec;
 
-import org.apache.xml.security.algorithms.SignatureAlgorithm;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.signature.XMLSignatureException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -10,10 +9,10 @@ import org.w3c.dom.Element;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
 
-public class BcSignatureAlgorithm extends SignatureAlgorithm{
+public class BcSignatureAlgorithm extends AbstractSignatureAlgorithm {
 
-    private Signature engine;
-    private static BouncyCastleProvider provider = new BouncyCastleProvider();
+    protected Signature engine;
+    protected static BouncyCastleProvider provider = new BouncyCastleProvider();
     public BcSignatureAlgorithm(Document doc, String algorithmURI) throws XMLSecurityException {
         super(doc, algorithmURI);
         initEngine();
@@ -34,9 +33,9 @@ public class BcSignatureAlgorithm extends SignatureAlgorithm{
         initEngine();
     }
 
-    private void initEngine() throws XMLSecurityException {
+    protected void initEngine() throws XMLSecurityException {
         try {
-            engine = Signature.getInstance("RSA", provider);
+            engine = Signature.getInstance("SHA1withRSA", provider);
         } catch (NoSuchAlgorithmException e) {
             throw new XMLSignatureException(e);
         }

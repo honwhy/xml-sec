@@ -103,7 +103,7 @@ public class MyUtil {
                 null, Constants._ATT_ALGORITHM, Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS
         );
 
-        SignatureAlgorithm signatureAlgorithm =
+        AbstractSignatureAlgorithm signatureAlgorithm =
                 new BcSignatureAlgorithm(doc, XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1);//use BcSignatureAlgorithm
         XMLSignature sig =
                 new XMLSignature(doc, null, signatureAlgorithm.getElement(), canonElem);
@@ -119,7 +119,8 @@ public class MyUtil {
 
         sig.getKeyInfo().addKeyName(signingCert.getSerialNumber().toString());
         sig.getKeyInfo().add(x509data);
-        sig.sign(privateKey);
+        //sig.sign(privateKey);
+        signatureAlgorithm.doSign(privateKey,sig.getSignedInfo());
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         XMLUtils.outputDOMc14nWithComments(doc, bos);
