@@ -23,7 +23,9 @@ public class XmlSecApplicationTests {
 	}
 	private static final String BASEDIR = System.getProperty("basedir");
 	private static final String SEP = System.getProperty("file.separator");
-
+	private static final String ECDSA_JKS =
+			"src/test/resources/ecdsa.jks";
+	private static final String ECDSA_JKS_PASSWORD = "security";
 	private static KeyPair keyPair;
 	static {
 		try {
@@ -45,11 +47,11 @@ public class XmlSecApplicationTests {
 			fis = new FileInputStream("src/test/resources/sample.xml");
 		}
 		String body = getFileContent(fis, "utf-8");
-		String signedXml = myUtil.signWithKeyPair(body, keyPair);
-		System.out.println(signedXml);
+		//String signedXml = myUtil.signWithKeyPair(body, keyPair);
+		//System.out.println(signedXml);
 
-		boolean validate = myUtil.verify(signedXml);
-		System.out.println(validate);
+		//boolean validate = myUtil.verify(signedXml);
+		//System.out.println(validate);
 		/* doSignWithCert */
 		KeyStore ks = KeyStore.getInstance("JKS");
 		FileInputStream fis2 = null;
@@ -63,11 +65,20 @@ public class XmlSecApplicationTests {
 		PrivateKey privateKey = (PrivateKey) ks.getKey("transmitter", "default".toCharArray());
 		X509Certificate signingCert = (X509Certificate) ks.getCertificate("transmitter");
 
-		String signed2 = myUtil.signWithCert(body, privateKey, signingCert);
-		System.out.println(signed2);
-		boolean validate2 = myUtil.verify(signed2);
-		System.out.println(validate2);
+		//String signed2 = myUtil.signWithCert(body, privateKey, signingCert);
+		//System.out.println(signed2);
+		//boolean validate2 = myUtil.verify(signed2);
+		//System.out.println(validate2);
+		// ecdsa
+		KeyStore keyStore;
+		keyStore = KeyStore.getInstance("JKS");
+		keyStore.load(new FileInputStream(ECDSA_JKS), ECDSA_JKS_PASSWORD.toCharArray());
+		PrivateKey privateKey2 =
+				(PrivateKey)keyStore.getKey("ECDSA", ECDSA_JKS_PASSWORD.toCharArray());
 
+		X509Certificate x509 = (X509Certificate)keyStore.getCertificate("ECDSA");
+		String signed3 = myUtil.signWithCertEcdsa(body, privateKey2, x509);
+		System.err.println(signed3);
 		/** close streams */
 		fis.close();
 		//fis2.close();

@@ -2,6 +2,7 @@ package com.honey.xmlsec;
 
 import org.apache.xml.security.algorithms.SignatureAlgorithm;
 import org.apache.xml.security.c14n.Canonicalizer;
+import org.apache.xml.security.encryption.XMLCipherParameters;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.signature.XMLSignature;
@@ -127,5 +128,42 @@ public class MyUtil {
         return new String(bos.toByteArray(), "utf-8");
     }
 
+    public String signWithCertEcdsa(String sourceXml, PrivateKey privateKey, X509Certificate signingCert) throws Exception {
+
+        Document doc = null;
+        try (InputStream is = new ByteArrayInputStream(sourceXml.getBytes(Charset.forName("utf-8")))) {
+            doc = MyXMLUtils.read(is, false);
+        }
+
+        Element root = doc.getDocumentElement();
+
+        Element canonElem =
+                XMLUtils.createElementInSignatureSpace(doc, Constants._TAG_CANONICALIZATIONMETHOD);
+        canonElem.setAttributeNS(
+                null, Constants._ATT_ALGORITHM, Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS
+        );
+
+        AbstractSignatureAlgorithm signatureAlgorithm =
+                new BcEcdsaSignatureAlgorithm(doc, XMLSignature.ALGO_ID_SIGNATURE_ECDSA_RIPEMD160);
+        XMLSignature sig =
+                new XMLSignature(doc, null, signatureAlgorithm.getElement(), canonElem);
+
+        root.appendChild(sig.getElement());
+        Transforms transforms = new Transforms(doc);
+        transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
+        sig.addDocument("", transforms, XMLCipherParameters.RIPEMD_160);
+
+        //sig.addKeyInfo(signingCert);
+        X509Data x509data = new X509Data(doc);
+        x509data.addCertificate(signingCert);
+
+        sig.getKeyInfo().add(x509data);
+        //sig.sign(privateKey);
+        signatureAlgorithm.doSign(privateKey,sig.getSignedInfo());
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        XMLUtils.outputDOMc14nWithComments(doc, bos);
+        return new String(bos.toByteArray(), "utf-8");
+    }
 
 }

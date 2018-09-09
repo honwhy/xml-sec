@@ -13,6 +13,9 @@ public class BcSignatureAlgorithm extends AbstractSignatureAlgorithm {
 
     protected Signature engine;
     protected static BouncyCastleProvider provider = new BouncyCastleProvider();
+    static {
+        Security.addProvider(provider);
+    }
     public BcSignatureAlgorithm(Document doc, String algorithmURI) throws XMLSecurityException {
         super(doc, algorithmURI);
         initEngine();
