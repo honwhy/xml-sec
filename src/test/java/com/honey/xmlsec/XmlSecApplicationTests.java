@@ -1,16 +1,22 @@
 package com.honey.xmlsec;
 
 import org.apache.xml.security.Init;
+import org.apache.xml.security.keys.KeyInfo;
+import org.apache.xml.security.signature.XMLSignature;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.security.*;
 import java.security.cert.X509Certificate;
 
@@ -29,6 +35,8 @@ public class XmlSecApplicationTests {
 	private static KeyPair keyPair;
 	static {
 		try {
+			BouncyCastleProvider provider = new BouncyCastleProvider();
+			Security.addProvider(provider);
 			keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
 			Init.init();
 		} catch (NoSuchAlgorithmException e) {
@@ -79,6 +87,8 @@ public class XmlSecApplicationTests {
 		X509Certificate x509 = (X509Certificate)keyStore.getCertificate("ECDSA");
 		String signed3 = myUtil.signWithCertEcdsa(body, privateKey2, x509);
 		System.err.println(signed3);
+		boolean validate3 = myUtil.verify(signed3);
+		System.err.println(validate3);
 		/** close streams */
 		fis.close();
 		//fis2.close();
@@ -98,5 +108,34 @@ public class XmlSecApplicationTests {
 			}
 			return sb.toString();
 		}
+	}
+
+	private static boolean doVerify(String signedXML) throws Exception {
+		Document doc = null;
+		try (InputStream is = new ByteArrayInputStream(signedXML.getBytes(Charset.forName("utf-8")))) {
+			doc = MyXMLUtils.read(is, false);
+		}
+
+		XPathFactory xpf = XPathFactory.newInstance();
+		XPath xpath = xpf.newXPath();
+		xpath.setNamespaceContext(new DSNamespaceContext());
+
+		String expression = "//ds:Signature[1]";
+		Element sigElement =
+				(Element) xpath.evaluate(expression, doc, XPathConstants.NODE);
+		XMLSignature signature = new XMLSignature(sigElement, "");
+
+		signature.addResourceResolver(new XPointerResourceResolver(sigElement));
+
+		KeyInfo ki = signature.getKeyInfo();
+		if (ki == null) {
+			throw new RuntimeException("No keyinfo");
+		}
+		X509Certificate cert = signature.getKeyInfo().getX509Certificate();
+
+		if (cert == null) {
+			throw new RuntimeException("No certificate");
+		}
+		return signature.checkSignatureValue(cert);
 	}
 }

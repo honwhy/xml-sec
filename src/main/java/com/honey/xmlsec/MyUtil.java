@@ -143,8 +143,8 @@ public class MyUtil {
                 null, Constants._ATT_ALGORITHM, Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS
         );
 
-        AbstractSignatureAlgorithm signatureAlgorithm =
-                new BcEcdsaSignatureAlgorithm(doc, XMLSignature.ALGO_ID_SIGNATURE_ECDSA_RIPEMD160);
+        SignatureAlgorithm signatureAlgorithm =
+                new SignatureAlgorithm(doc, XMLSignature.ALGO_ID_SIGNATURE_ECDSA_RIPEMD160);
         XMLSignature sig =
                 new XMLSignature(doc, null, signatureAlgorithm.getElement(), canonElem);
 
@@ -158,8 +158,8 @@ public class MyUtil {
         x509data.addCertificate(signingCert);
 
         sig.getKeyInfo().add(x509data);
-        //sig.sign(privateKey);
-        signatureAlgorithm.doSign(privateKey,sig.getSignedInfo());
+        sig.sign(privateKey);
+        //signatureAlgorithm.doSign(privateKey,sig.getSignedInfo());
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         XMLUtils.outputDOMc14nWithComments(doc, bos);
