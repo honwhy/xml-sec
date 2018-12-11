@@ -32,4 +32,3 @@ this is a SpringBoot Project, but it can be used as an dependency,
     </exclusions>
 </dependency>
 ```
-BTW 支持海关总署公告2018年第56号报文数字签名要求
